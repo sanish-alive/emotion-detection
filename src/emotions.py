@@ -41,6 +41,17 @@ def plot_model_history(model_history):
     fig.savefig('plot.png')
     plt.show()
 
+def equalize_hist(image):
+    img_flat = image.flatten()
+    hist, bins = np.histogram(img_flat, bins=256, range=(0, 255))
+    cdf = hist.cumsum()
+    cdf_normalized = (cdf - cdf.min()) * 255 / (cdf.max() - cdf.min())
+    img_equalized = np.interp(img_flat, bins[:-1], cdf_normalized)
+    img_equalized = img_equalized.reshape(image.shape)
+    img_equalized = np.uint8(img_equalized)
+
+    return img_equalized
+
 # Define data generators
 train_dir = 'data/train'
 val_dir = 'data/test'
@@ -117,6 +128,7 @@ elif mode == "display":
             break
         facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        gray = equalize_hist(gray)
         faces = facecasc.detectMultiScale(gray,scaleFactor=1.3, minNeighbors=5)
 
         for (x, y, w, h) in faces:
